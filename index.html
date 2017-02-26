@@ -1,0 +1,150 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Sinuca :: Guilherme Enoc Egas de Carvalho </title>
+</head>
+<body style="overflow:hidden; background: #151515; margin:80px;" leftmargin="0" topmargin="0" marginheight="0" marginwidth="0">
+    <center>
+        <canvas id="canvasElement" width="584" height="398">Porra... seu navegador é uma merda!</canvas>
+    </center>
+</body>
+<script type="text/javascript">
+var balls = [];
+for(var i = 0; i < 15; i++ ) balls.push({ x:90, y:199, vx:0, vy:0, size: 10, color: "#f00", h: 1 });
+
+balls[1].y = balls[0].y - 22;   
+balls[2].y = balls[0].y + 22;
+balls[3].y = balls[1].y - 22;
+balls[4].y = balls[2].y + 22;
+balls[5].x = balls[0].x+19;
+balls[5].y = balls[0].y-11;
+balls[6].x = balls[5].x;
+balls[6].y = (balls[0].y+balls[2].y)/2;
+balls[7].x = balls[5].x;
+balls[7].y = (balls[2].y+balls[4].y)/2;
+balls[8].x = balls[5].x;
+balls[8].y = (balls[1].y+balls[3].y)/2;
+balls[9].x = balls[0].x+38;
+balls[10].x = balls[9].x;
+balls[10].y = balls[2].y;
+balls[11].x = balls[9].x;
+balls[11].y = balls[1].y;
+balls[12].x = balls[9].x+19;
+balls[12].y = balls[5].y;
+balls[13].x = balls[12].x;
+balls[13].y = balls[6].y;
+balls[14].x = balls[13].x+19;
+balls[14].y = balls[0].y;
+balls.push({ x:460, y:199, vx:0, vy:0, size: 11, color: "#fff", h: 1});
+
+var img = new Image();
+img.src = 'mesa.png';
+var mouse = { x: 0, y: 0 };
+var canvas = document.getElementById('canvasElement');
+if (canvas && canvas.getContext) {
+    var context = canvas.getContext('2d');
+    initialize();
+}
+function initialize() {
+    window.addEventListener('resize', resizeCanvas, false);
+    context.drawImage(img, 0, 0);
+    canvas.addEventListener('mousemove', mouseMove, false);
+    canvas.addEventListener( 'click', mouseClick, false);
+    context.beginPath();
+
+    setInterval( timeUpdate, 10 );
+}
+function timeUpdate(e) {
+    context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    var img = new Image();
+    img.src = 'mesa.png';
+    context.drawImage(img, 0, 0);
+    for( var i = 0; i < balls.length; i++ ) {
+        if (balls[i].h) {
+            if (balls[i].x<38 || balls[i].x>584-38) balls[i].vx = -balls[i].vx;
+            if (balls[i].y<38 || balls[i].y>398-38) balls[i].vy = -balls[i].vy;
+            balls[i].x = balls[i].x+balls[i].vx;
+            balls[i].y = balls[i].y+balls[i].vy;
+            balls[i].vx = balls[i].vx*0.99;
+            balls[i].vy = balls[i].vy*0.99;
+            context.fillStyle = balls[i].color;
+            context.beginPath();
+            context.arc(balls[i].x,balls[i].y,balls[i].size,0,Math.PI*2,true);
+            context.closePath();
+            context.fill();
+            if ((balls[i].x<38+10 && balls[i].y<38+10) || (balls[i].x>584-38-10 && balls[i].y<38+10) || (balls[i].x<38+10 && balls[i].y>398-38-10) || (balls[i].x>584-38-10 && balls[i].y>398-38-10) || (balls[i].x>285 && balls[i].x<299 && balls[i].y<38+10) || (balls[i].x>584-38-10 && balls[i].y>398-38-10) || (balls[i].x>285 && balls[i].x<299 && balls[i].y>398-38-10)) {
+                if (i==15) {
+                    balls[15].x = 460;
+                    balls[15].y = 199
+                    balls[15].vx = balls[15].vy = 0;
+                } else balls[i].h=balls[i].vx=balls[i].vy=0;
+            }
+        }
+    }
+    for( var i = 0; i < balls.length; i++ ) {
+        for( var j = i + 1; j < balls.length; j++ ) {
+            if (balls[i].h && balls[j].h) {
+                if (collision(balls[i],balls[j])) {
+                    ball1 = balls[i];
+                    ball2 = balls[j];
+                    dx = ball1.x - ball2.x;
+                    dy = ball1.y - ball2.y;
+                    colision_angle = Math.atan2(dy, dx);
+                    speed1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
+                    speed2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
+                    direction1 = Math.atan2(ball1.vy, ball1.vx);
+                    direction2 = Math.atan2(ball2.vy, ball2.vx);
+                    vx_1 = speed1 * Math.cos(direction1 - colision_angle);
+                    vy_1 = speed1 * Math.sin(direction1 - colision_angle);
+                    vx_2 = speed2 * Math.cos(direction2 - colision_angle);
+                    vy_2 = speed2 * Math.sin(direction2 - colision_angle);
+                    final_vx_1 = ((ball1.size - ball2.size) * vx_1 + (ball2.size + ball2.size) * vx_2)/(ball1.size + ball2.size);
+                    final_vx_2 = ((ball1.size + ball1.size) * vx_1 + (ball2.size - ball1.size) * vx_2)/(ball1.size + ball2.size);
+                    final_vy_1 = vy_1;
+                    final_vy_2 = vy_2;
+                    ball1.vx = Math.cos(colision_angle) * final_vx_1 + Math.cos(colision_angle + Math.PI/2) * final_vy_1;
+                    ball1.vy = Math.sin(colision_angle) * final_vx_1 + Math.sin(colision_angle + Math.PI/2) * final_vy_1;
+                    ball2.vx = Math.cos(colision_angle) * final_vx_2 + Math.cos(colision_angle + Math.PI/2) * final_vy_2;
+                    ball2.vy = Math.sin(colision_angle) * final_vx_2 + Math.sin(colision_angle + Math.PI/2) * final_vy_2;
+                    while (collision(ball1,ball2)) {
+                        if (ball1.x<ball2.x) {
+                            ball1.x--;
+                            ball2.x++;
+                        } else {
+                            ball1.x++;
+                            ball2.x--;
+                        }
+
+                    }
+                    balls[i] = ball1;
+                    balls[j] = ball2;
+                }
+            }
+        }
+    }
+}
+function resizeCanvas(e) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+function collision(p1,p2) {
+    var dx = p2.x-p1.x;
+    var dy = p2.y-p1.y;
+    d = Math.sqrt(dx*dx + dy*dy);
+    return (d<p1.size+p2.size);
+}
+var mouse = {x:0, y:0};
+function mouseMove(e) {
+    mouse.x = e.x - canvas.offsetLeft;
+    mouse.y = e.y - canvas.offsetTop;
+
+}
+
+function mouseClick(e) {
+    balls[15].vx = (mouse.x - balls[15].x)/10;
+    balls[15].vy = (mouse.y - balls[15].y)/10;
+}
+    
+    
+</script>
+</html>

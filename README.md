@@ -1,0 +1,1 @@
+# sinuca.js
